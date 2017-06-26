@@ -15,6 +15,9 @@ getSharedCols <- function(dt_left, dt_right){
   return(intersect(names(dt_left),names(dt_right)))
 }
 
+
+#--------------------------------------------------------------------------------
+
 con <- dbConnect(MySQL(),
                  user = 'root',
                  password = 'diciembrE2016',
@@ -44,12 +47,10 @@ for(s_table in v_s_tables_of_interest){
 #disconnect from DB
 lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)
 
-stopifnot(isColsUniqueIdentifier(l_tables[["dt_text"]], "text_id"))
-
+#--------------------------------------------------------------------------------
 dt_text <- l_tables[["dt_text"]]
 dt_quote <- l_tables[["dt_quote"]]
 
-isColsUniqueIdentifier(dt_quote, "text_id")
 dt_quote <- leftMerge(dt_quote, dt_text, "text_id")
 
 dt_post <- l_tables[["dt_post"]]
@@ -72,15 +73,13 @@ dt_mturk <- leftMerge(l_tables[["dt_mturk_2010_qr_entry"]],
 v_s_id <- getSharedCols(dt_quote, dt_mturk)
 isColsUniqueIdentifier(dt_quote, v_s_id)
 
-# are going to remove cases which have ambigious IDs 
+# remove cases which have ambigious IDs  
 dt_mturk[ , count_id := .N, by = v_s_id]
 i_nrow <- nrow(dt_mturk)
 dt_mturk <- dt_mturk[ count_id == 1]
 i_observations_lost <- i_nrow - nrow(dt_mturk)
 dt_mturk[ , count_id := NULL]
-#
-
-
+# 40 cases removed
 
 dt_quote <- leftMerge(dt_quote, dt_mturk, v_s_id)
 #------------------------------------------------------------------------------------------------------
@@ -142,9 +141,15 @@ v_s_order <- c("post_id",
 
 setcolorder(dt_quote, v_s_order)
 
-write.csv(dt_quote, file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
+# write.csv(dt_quote, file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
 save(dt_quote, file="./data/output/quoteResponseMTurk.RData" )
 
-dt_quote[ ,.(count = .N, 
-             count_wth_mturk = sum(!is.na(disagree_agree)),
+dt_agg <- dt_quote[ ,.(count = .N, 
+             count_wth_mturk = sum(!is.na(sarcasm_yes)),
              mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE)), by = .(topic)]
+dt_total <- dt_quote[ ,.(topic = "TOTAL",
+                         count = .N, 
+                         count_wth_mturk = sum(!is.na(sarcasm_yes)),
+                         mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE))]
+dt_agg <- rbindlist(l=list(dt_agg, dt_total))
+write.csv(dt_agg, "./data/output/summaryCounts.csv",row.names = FALSE)
