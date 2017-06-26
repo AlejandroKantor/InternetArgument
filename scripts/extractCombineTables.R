@@ -33,9 +33,10 @@ v_s_tables_of_interest <- c("post",
                             "topic",
                             "mturk_2010_qr_entry",
                             "mturk_2010_qr_task1_average_response",
-                            "mturk_2010_p123_post",
-                            "mturk_2010_p123_entry",
-                            "mturk_2010_p123_average_response",
+                            "mturk_2010_qr_task2_average_response",
+                            #"mturk_2010_p123_post", #havent included these yet
+                            #"mturk_2010_p123_entry",
+                            #"mturk_2010_p123_average_response",
                             "quote")
 
 stopifnot(all(v_s_tables_of_interest %in% v_s_tables))
@@ -82,6 +83,7 @@ dt_mturk[ , count_id := NULL]
 # 40 cases removed
 
 dt_quote <- leftMerge(dt_quote, dt_mturk, v_s_id)
+
 #------------------------------------------------------------------------------------------------------
 #topic 
 dt_topic <- leftMerge( l_tables[["dt_discussion_topic"]], l_tables[["dt_topic"]], "topic_id" )
