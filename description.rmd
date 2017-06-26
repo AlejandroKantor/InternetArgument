@@ -67,7 +67,6 @@ Data set with
 * topic
 
 * 1 out of 3 mechanical turk data incorporated
-    - yet to include other 2 mechanical turk data sources
 
 See files:  
 
@@ -84,11 +83,11 @@ dtToLatexTable(l_tables[["dt_summary"]],s_size = "tiny")
 ```
 
 * Only a small sample of post-responses have been labeled by Mechanical Turk
-   - 10K vs 540K  Based on 1 out of 3 Mechanical turk data 
+    - 10K vs 540K  Based on 1 out of 3 Mechanical turk data 
 
 ## Proposed next steps
 
 * Include other 2 mechanical turk data sources
 
-* Create response variable that only includes the portion of the response that responds to the quoted text
+* Create response variable that only has text which responds to original post
     - had problems creating this variable due to encoding
