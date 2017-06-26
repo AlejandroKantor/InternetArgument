@@ -146,6 +146,7 @@ setcolorder(dt_quote, v_s_order)
 # write.csv(dt_quote, file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
 save(dt_quote, file="./data/output/quoteResponseMTurk.RData" )
 
+l_tables <- list()
 dt_agg <- dt_quote[ ,.(count = .N, 
              count_wth_mturk = sum(!is.na(sarcasm_yes)),
              mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE)), by = .(topic)]
@@ -153,5 +154,6 @@ dt_total <- dt_quote[ ,.(topic = "TOTAL",
                          count = .N, 
                          count_wth_mturk = sum(!is.na(sarcasm_yes)),
                          mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE))]
-dt_agg <- rbindlist(l=list(dt_agg, dt_total))
-write.csv(dt_agg, "./data/output/summaryCounts.csv",row.names = FALSE)
+l_tables[["dt_summary"]] <- rbindlist(l=list(dt_agg, dt_total))
+
+save(l_tables, file="./data/output/tables.RData")
