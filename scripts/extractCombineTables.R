@@ -143,7 +143,10 @@ v_s_order <- c("post_id",
 
 setcolorder(dt_quote, v_s_order)
 
-# write.csv(dt_quote, file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
+set.seed(1111)
+i_rows_example = 2000
+v_i_sample <- sample(x = 1:nrow(dt_quote),size = i_rows_example)
+write.csv(dt_quote[v_i_sample], file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
 save(dt_quote, file="./data/output/quoteResponseMTurk.RData" )
 
 l_tables <- list()
