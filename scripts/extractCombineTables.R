@@ -34,9 +34,9 @@ v_s_tables_of_interest <- c("post",
                             "mturk_2010_qr_entry",
                             "mturk_2010_qr_task1_average_response",
                             "mturk_2010_qr_task2_average_response",
-                            #"mturk_2010_p123_post", #havent included these yet
-                            #"mturk_2010_p123_entry",
-                            #"mturk_2010_p123_average_response",
+                            "mturk_2010_p123_post", #havent included these yet
+                            "mturk_2010_p123_entry",
+                            "mturk_2010_p123_average_response",
                             "quote")
 
 stopifnot(all(v_s_tables_of_interest %in% v_s_tables))
@@ -48,7 +48,7 @@ for(s_table in v_s_tables_of_interest){
 #disconnect from DB
 lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 dt_text <- l_tables[["dt_text"]]
 dt_quote <- l_tables[["dt_quote"]]
 
@@ -83,6 +83,17 @@ dt_mturk[ , count_id := NULL]
 # 40 cases removed
 
 dt_quote <- leftMerge(dt_quote, dt_mturk, v_s_id)
+
+dt_mturk_task2 <- leftMerge(l_tables[["dt_mturk_2010_qr_entry"]],
+                      l_tables[["dt_mturk_2010_qr_task2_average_response"]],
+                      c("page_id","tab_number"))
+
+# remove cases which have ambigious IDs  
+dt_mturk_task2[ , count_id := .N, by = v_s_id]
+i_nrow <- nrow(dt_mturk_task2)
+dt_mturk_task2 <- dt_mturk_task2[ count_id == 1]
+i_observations_lost <- i_nrow - nrow(dt_mturk_task2)
+dt_mturk_task2[ , count_id := NULL]
 
 #------------------------------------------------------------------------------------------------------
 #topic 
@@ -146,6 +157,7 @@ setcolorder(dt_quote, v_s_order)
 set.seed(1111)
 i_rows_example = 2000
 v_i_sample <- sample(x = 1:nrow(dt_quote),size = i_rows_example)
+
 write.csv(dt_quote[v_i_sample], file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
 save(dt_quote, file="./data/output/quoteResponseMTurk.RData" )
 
