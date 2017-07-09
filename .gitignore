@@ -21,5 +21,9 @@ references/
 *.utf8.md
 *.knit.md
 
-data/
+data/*
+!data/output/
+data/output/*
+!data/output/mturkTask1And2.csv
+
 .Rproj.user
