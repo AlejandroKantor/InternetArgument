@@ -25,5 +25,6 @@ data/*
 !data/output/
 data/output/*
 !data/output/mturkTask1And2.csv
+!data/output/mturkTask3.csv
 
 .Rproj.user
