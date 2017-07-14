@@ -34,9 +34,9 @@ v_s_tables_of_interest <- c("post",
                             "mturk_2010_qr_entry",
                             "mturk_2010_qr_task1_average_response",
                             "mturk_2010_qr_task2_average_response",
-                            #"mturk_2010_p123_post", #havent included these yet
-                            #"mturk_2010_p123_entry",
-                            #"mturk_2010_p123_average_response",
+                            "mturk_2010_p123_post", #havent included these yet
+                            "mturk_2010_p123_entry",
+                            "mturk_2010_p123_average_response",
                             "quote")
 
 stopifnot(all(v_s_tables_of_interest %in% v_s_tables))
@@ -48,7 +48,7 @@ for(s_table in v_s_tables_of_interest){
 #disconnect from DB
 lapply( dbListConnections( dbDriver( drv = "MySQL")), dbDisconnect)
 
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 dt_text <- l_tables[["dt_text"]]
 dt_quote <- l_tables[["dt_quote"]]
 
@@ -67,29 +67,40 @@ dt_quote <- leftMerge(dt_quote, dt_post, v_s_dis_post_id)
 names(dt_quote)
 
 #------------------------------------------------------------------------------------------------------
-dt_mturk <- leftMerge(l_tables[["dt_mturk_2010_qr_entry"]],
-                      l_tables[["dt_mturk_2010_qr_task1_average_response"]],
+dt_mturk <- l_tables[["dt_mturk_2010_qr_entry"]]
+dt_mturk_task1 <- l_tables[["dt_mturk_2010_qr_task1_average_response"]]
+dt_mturk_task2 <- l_tables[["dt_mturk_2010_qr_task2_average_response"]]
+setnames(dt_mturk_task1, "num_annots", "num_annots_task1")
+setnames(dt_mturk_task2, "num_annots", "num_annots_task2")
+
+dt_mturk <- leftMerge(dt_mturk,
+                      dt_mturk_task1,
                       c("page_id","tab_number"))
+dt_mturk <- leftMerge(dt_mturk,
+                      dt_mturk_task2,
+                      c("page_id","tab_number"))
+
+dt_mturk_task2 <- leftMerge(l_tables[["dt_mturk_2010_qr_entry"]],
+                            l_tables[["dt_mturk_2010_qr_task2_average_response"]],
+                            c("page_id","tab_number"))
 
 v_s_id <- getSharedCols(dt_quote, dt_mturk)
 isColsUniqueIdentifier(dt_quote, v_s_id)
 
-# remove cases which have ambigious IDs  
-dt_mturk[ , count_id := .N, by = v_s_id]
-i_nrow <- nrow(dt_mturk)
-dt_mturk <- dt_mturk[ count_id == 1]
-i_observations_lost <- i_nrow - nrow(dt_mturk)
-dt_mturk[ , count_id := NULL]
-# 40 cases removed
 
-dt_quote <- leftMerge(dt_quote, dt_mturk, v_s_id)
+
+#dt_quote <- leftMerge(dt_quote, dt_mturk, v_s_id)
+dt_mturk <- leftMerge( dt_mturk, dt_quote, v_s_id)
+
+
+
 
 #------------------------------------------------------------------------------------------------------
 #topic 
 dt_topic <- leftMerge( l_tables[["dt_discussion_topic"]], l_tables[["dt_topic"]], "topic_id" )
 
-setnames(dt_quote, "topic", "topic_mturk")
-dt_quote <- leftMerge(dt_quote, dt_topic, "discussion_id")
+setnames(dt_mturk, "topic", "topic_mturk")
+dt_mturk <- leftMerge(dt_mturk, dt_topic, "discussion_id")
 
 #------------------------------------------------------------------------------------------------------
 
@@ -126,7 +137,6 @@ v_s_order <- c("post_id",
                "altered",
                "page_id", 
                "tab_number", 
-               "num_annots", 
                "disagree_agree", 
                "disagree_agree_unsure", 
                "attacking_respectful", 
@@ -138,25 +148,39 @@ v_s_order <- c("post_id",
                "sarcasm_yes", 
                "sarcasm_no", 
                "sarcasm_unsure", 
-               "discussion_id"
+               "discussion_id",
+               "num_annots_task1",  
+               "num_disagree" ,  
+               "num_annots_task2" ,  
+               "agree",
+               "defeater_undercutter", 
+               "defeater_undercutter_unsure",
+               "negotiate_attack",
+               "negotiate_attack_unsure",     
+               "personal_audience",            
+               "personal_audience_unsure",
+               "questioning_asserting",
+               "questioning_asserting_unsure"
+              
 )
 
-setcolorder(dt_quote, v_s_order)
+setcolorder(dt_mturk, v_s_order)
 
-set.seed(1111)
-i_rows_example = 2000
-v_i_sample <- sample(x = 1:nrow(dt_quote),size = i_rows_example)
-write.csv(dt_quote[v_i_sample], file="./data/output/quoteResponseMTurk.csv" ,row.names = FALSE)
-save(dt_quote, file="./data/output/quoteResponseMTurk.RData" )
+# set.seed(1111)
+# i_rows_example = 2000
+# v_i_sample <- sample(x = 1:nrow(dt_quote),size = i_rows_example)
 
-l_tables <- list()
-dt_agg <- dt_quote[ ,.(count = .N, 
-             count_wth_mturk = sum(!is.na(sarcasm_yes)),
-             mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE)), by = .(topic)]
-dt_total <- dt_quote[ ,.(topic = "TOTAL",
-                         count = .N, 
-                         count_wth_mturk = sum(!is.na(sarcasm_yes)),
-                         mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE))]
-l_tables[["dt_summary"]] <- rbindlist(l=list(dt_agg, dt_total))
+write.csv(dt_mturk, file="./data/output/mturkTask1And2.csv" ,row.names = FALSE)
+save(dt_mturk, file="./data/output/mturkTask1And2.RData" )
 
-save(l_tables, file="./data/output/tables.RData")
+# l_tables <- list()
+# dt_agg <- dt_quote[ ,.(count = .N, 
+#              count_wth_mturk = sum(!is.na(sarcasm_yes)),
+#              mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE)), by = .(topic)]
+# dt_total <- dt_quote[ ,.(topic = "TOTAL",
+#                          count = .N, 
+#                          count_wth_mturk = sum(!is.na(sarcasm_yes)),
+#                          mean_sarcasm_yes = mean(sarcasm_yes,na.rm = TRUE))]
+# l_tables[["dt_summary"]] <- rbindlist(l=list(dt_agg, dt_total))
+# 
+# save(l_tables, file="./data/output/tables.RData")
